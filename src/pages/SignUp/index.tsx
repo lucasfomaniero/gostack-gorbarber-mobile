@@ -1,13 +1,20 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Image, KeyboardAvoidingView, Platform, View } from 'react-native';
+import {
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  View,
+  TextInput,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+import { Form } from '@unform/mobile';
 import { ScrollView } from 'react-native-gesture-handler';
+import { FormHandles } from '@unform/core';
 import logoImg from '../../assets/logo.png';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import {
-  SafeArea,
   Container,
   LoginContainer,
   Title,
@@ -15,8 +22,18 @@ import {
   BackToSignInText,
 } from './styles';
 
+interface InputProps {
+  onFocus: void;
+}
+
 const SignUp: React.FC = () => {
+  const formRef = useRef<FormHandles>(null);
   const navigation = useNavigation();
+  const emailInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInput>(null);
+  const handleFormSubmit = useCallback(data => {
+    console.log(data);
+  }, []);
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -32,10 +49,49 @@ const SignUp: React.FC = () => {
             <View>
               <Title>Crie sua conta</Title>
             </View>
-            <Input name="name" icon="user" placeholder="Nome" />
-            <Input name="email" icon="mail" placeholder="E-mail" />
-            <Input name="password" icon="lock" placeholder="Senha" />
-            <Button>Entrar</Button>
+            <Form ref={formRef} onSubmit={handleFormSubmit}>
+              <Input
+                onSubmitEditing={() => {
+                  emailInputRef.current?.focus();
+                }}
+                name="name"
+                icon="user"
+                autoCorrect={false}
+                placeholder="Nome"
+                autoCompleteType="name"
+                autoCapitalize="words"
+                returnKeyType="next"
+              />
+              <Input
+                onSubmitEditing={() => {
+                  passwordInputRef.current?.focus();
+                }}
+                ref={emailInputRef}
+                name="email"
+                icon="mail"
+                autoCorrect={false}
+                placeholder="E-mail"
+                autoCompleteType="email"
+                autoCapitalize="none"
+                keyboardType="email-address"
+                returnKeyType="next"
+              />
+              <Input
+                ref={passwordInputRef}
+                textContentType="newPassword"
+                name="password"
+                icon="lock"
+                placeholder="Senha"
+                autoCompleteType="password"
+                secureTextEntry
+                keyboardType="default"
+                returnKeyType="send"
+                onSubmitEditing={() => formRef.current?.submitForm()}
+              />
+              <Button onPress={() => formRef.current?.submitForm()}>
+                Entrar
+              </Button>
+            </Form>
           </LoginContainer>
         </Container>
       </ScrollView>
