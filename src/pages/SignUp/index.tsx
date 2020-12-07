@@ -24,6 +24,7 @@ import {
   BackToSignInText,
 } from './styles';
 import getErrorsValidation from '../../utils/getErrorsValidation';
+import api from '../../services/api';
 
 interface InputProps {
   onFocus: void;
@@ -40,35 +41,44 @@ const SignUp: React.FC = () => {
   const navigation = useNavigation();
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
-  const handleFormSubmit = useCallback(async (data: UserData) => {
-    formRef.current?.setErrors({});
-    try {
-      const schema = Yup.object().shape({
-        name: Yup.string().required('O nome é obrigatório'),
-        email: Yup.string()
-          .required('O e-mail é obrigatório')
-          .email('Digite um e-mail válido'),
-        password: Yup.string().min(
-          6,
-          'A senha deve conter o mínimo de 6 dígitos',
-        ),
-      });
-      await schema.validate(data, {
-        abortEarly: false,
-      });
-      // await api.post<UserData>('/users', data);
-    } catch (err) {
-      if (err instanceof Yup.ValidationError) {
-        const errors = getErrorsValidation(err);
-        formRef.current?.setErrors(errors);
-        return;
+  const handleFormSubmit = useCallback(
+    async (data: UserData) => {
+      formRef.current?.setErrors({});
+      try {
+        const schema = Yup.object().shape({
+          name: Yup.string().required('O nome é obrigatório'),
+          email: Yup.string()
+            .required('O e-mail é obrigatório')
+            .email('Digite um e-mail válido'),
+          password: Yup.string().min(
+            6,
+            'A senha deve conter o mínimo de 6 dígitos',
+          ),
+        });
+        await schema.validate(data, {
+          abortEarly: false,
+        });
+        await api.post<UserData>('/users', data);
+        Alert.alert(
+          'Cadastro realizado com sucesso',
+          'Você já pode fazer login na aplicação.',
+        );
+        navigation.goBack();
+      } catch (err) {
+        if (err instanceof Yup.ValidationError) {
+          const errors = getErrorsValidation(err);
+          formRef.current?.setErrors(errors);
+          return;
+        }
+        console.log(err);
+        Alert.alert(
+          'Erro ao realizar o cadastro',
+          'Ocorreu um erro ao realizar o cadastro. Tente novamente.',
+        );
       }
-      Alert.alert(
-        'Erro ao realizar o cadastro',
-        'Ocorreu um erro ao realizar o cadastro. Tente novamente.',
-      );
-    }
-  }, []);
+    },
+    [navigation],
+  );
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -113,13 +123,10 @@ const SignUp: React.FC = () => {
               />
               <Input
                 ref={passwordInputRef}
-                textContentType="newPassword"
+                secureTextEntry
                 name="password"
                 icon="lock"
                 placeholder="Senha"
-                autoCompleteType="password"
-                secureTextEntry
-                keyboardType="default"
                 returnKeyType="send"
                 onSubmitEditing={() => formRef.current?.submitForm()}
               />
